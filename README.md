@@ -5,6 +5,7 @@ Problem: Small retail businesses often manage supplier credit using intuition an
 
 Objective: Build a daily decision-support system that connects supplier payables with supplier-attributed inventory and cash position to improve payment timing and working-capital allocation.
 
+```
 Supplier
    ↓
 Outstanding payable
@@ -16,3 +17,4 @@ Inventory/Due ratio
 Cash position
    ↓
 Payment priority
+```
