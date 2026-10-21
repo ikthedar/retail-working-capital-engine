@@ -81,3 +81,22 @@ python -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
+
+
+### 2. Ingest Data & Initialize Ledger
+bash
+python -c "from app.database import init_db; from app.routers.ingestion import sync_data_to_db; from app.database import SessionLocal; init_db(); sync_data_to_db(SessionLocal())"
+
+### 3. Launch Local Server
+bash
+python run.py
+Visit http://127.0.0.1:8000 in your browser to access the dashboard.
+
+📡 REST API Reference
+Endpoint	Method	Description
+/api/analytics/kpi-summary	GET	Catalog-wide inventory value, periodic COGS, turnover, and average DSI
+/api/analytics/top-products	GET	Top selling SKUs by units or COGS value with velocity tier badges
+/api/analytics/top-suppliers	GET	Supplier leaderboard ranked by sales volume, COGS, and turnover
+/api/analytics/supplier-detail	GET	Deep-dive modal payload: SKU turnover impact % and active inventory breakdown
+/api/analytics/velocity-distribution	GET	Distribution breakdown across Fast, Medium, Slow, and Dead capital
+/api/forecasting/predict	GET	ML-driven demand projections, safety stock, and reorder alerts
