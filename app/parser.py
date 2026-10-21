@@ -159,7 +159,7 @@ def parse_transaction_string(raw_str: str, default_type: str = "SALE", base_year
 
 def ingest_csv_data(filepath: Optional[Path] = None, base_year: int = DEFAULT_BASE_YEAR) -> Dict[str, Any]:
     """
-    Parses CSV and consolidates products according to Bucket 1 specification.
+    Parses CSV and consolidates products according to inventory data specification.
     Returns structured dict ready for DB insertion.
     """
     path = filepath or DEFAULT_CSV_PATH
