@@ -61,7 +61,7 @@ def sync_data_to_db(db: Session, data: dict) -> IngestionResult:
 @router.post("/default-csv", response_model=IngestionResult)
 def ingest_default_csv(base_year: int = DEFAULT_BASE_YEAR, db: Session = Depends(get_db)):
     """
-    Ingests the default knowledge CSV file into the database using Bucket 1 parsing rules.
+    Ingests the default knowledge CSV file into the database using automated parsing rules.
     """
     if not DEFAULT_CSV_PATH.exists():
         raise HTTPException(status_code=404, detail=f"Default CSV file not found at {DEFAULT_CSV_PATH}")
