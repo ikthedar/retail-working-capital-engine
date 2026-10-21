@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Turnover & Velocity Engine</title>
+  <meta name="description" content="Traditional inventory turnover ratio, days sales of inventory (DSI), and product demand velocity analytics.">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-text">
+          <h1>Inventory Velocity & Turnover</h1>
+          <p>Financial Inventory Analytics & Demand Engine</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="as-of-container">
+          <label for="asOfDateInput">Evaluation Date:</label>
+          <input type="date" id="asOfDateInput" class="as-of-input" value="2026-10-19">
+        </div>
+        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+        <button id="uploadCsvBtn" class="btn btn-outline" title="Upload and analyze a newer CSV export">
+          <span>📁</span> Upload CSV
+        </button>
+        <button id="syncDefaultBtn" class="btn btn-primary" title="Re-read and synchronize default CSV dataset">
+          <span>🔄</span> Re-Sync Local CSV
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sliding Horizon Navigation Bar -->
+  <div class="horizon-bar-container">
+    <div class="horizon-bar">
+      <div class="horizon-title-group">
+        <span class="horizon-label">Time Window:</span>
+      </div>
+      <div class="horizon-pills">
+        <button class="horizon-pill" data-horizon="1w">1 Week (7d)</button>
+        <button class="horizon-pill" data-horizon="2w">2 Weeks (14d)</button>
+        <button class="horizon-pill active" data-horizon="1m">1 Month (30d)</button>
+        <button class="horizon-pill" data-horizon="3m">3 Months (90d)</button>
+        <button class="horizon-pill" data-horizon="6m">6 Months (180d)</button>
+        <button class="horizon-pill" data-horizon="12m">12 Months (365d)</button>
+        <button class="horizon-pill" data-horizon="all">All Time</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- Top KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card accent-stock">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Inventory Value</span>
+          <span class="kpi-badge">Current Lot</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalValue">৳0</div>
+        <div class="kpi-subtitle">Sum of physical stock × weighted unit cost</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Stock Units</span>
+          <span class="kpi-badge">Warehouse</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalUnits">0 pcs</div>
+        <div class="kpi-subtitle">Across all consolidated catalog items</div>
+      </div>
+
+      <div class="kpi-card accent-cogs">
+        <div class="kpi-header">
+          <span class="kpi-title">Period COGS</span>
+          <span class="kpi-badge">Selected Window</span>
+        </div>
+        <div class="kpi-value" id="kpiPeriodCOGS">৳0</div>
+        <div class="kpi-subtitle" id="kpiPeriodUnits">0 pcs sold</div>
+      </div>
+
+      <div class="kpi-card accent-turnover">
+        <div class="kpi-header">
+          <span class="kpi-title">Turnover Ratio</span>
+          <span class="kpi-badge">Annualized</span>
+        </div>
+        <div class="kpi-value" id="kpiTurnoverRatio">0.00x</div>
+        <div class="kpi-subtitle" id="kpiTurnoverSubtitle">Period: 0.00x</div>
+      </div>
+
+      <div class="kpi-card accent-dsi">
+        <div class="kpi-header">
+          <span class="kpi-title">Avg Days Sales (DSI)</span>
+          <span class="kpi-badge">Turnover Speed</span>
+        </div>
+        <div class="kpi-value" id="kpiAverageDSI">N/A</div>
+        <div class="kpi-subtitle">Average days to clear active inventory</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Moving SKUs</span>
+          <span class="kpi-badge">Active</span>
+        </div>
+        <div class="kpi-value" id="kpiActiveSKUs">0 / 0</div>
+        <div class="kpi-subtitle">Products with sales in this period</div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="view-tabs">
+      <button class="view-tab active" data-target="tab-products">Products Sold The Most & Demand</button>
+      <button class="view-tab" data-target="tab-suppliers">Supplier Analytics & Top Sold</button>
+      <button class="view-tab" data-target="tab-inventory">Inventory Catalog Explorer</button>
+      <button class="view-tab" data-target="tab-forecasting">🤖 AI Demand & Forecasting</button>
+    </nav>
+
+    <!-- TAB 1: Product Velocity & Demand -->
+    <div id="tab-products" class="tab-content active">
+      <div class="dashboard-grid-2col">
+        <!-- Top Products Leaderboard Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <h3>Top Selling Products</h3>
+              <p>Ranked in the selected time horizon</p>
+            </div>
+            <div class="toggle-group">
+              <button class="toggle-btn prod-toggle-btn active" data-sort="units">By Volume (Pcs)</button>
+              <button class="toggle-btn prod-toggle-btn" data-sort="cogs">By Value (COGS ৳)</button>
+            </div>
+          </div>
+          <div class="leaderboard-list" id="topProductsList">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+
+        <!-- Velocity Distribution & Charts Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <h3>Inventory Velocity Health</h3>
+              <p>Breakdown across Fast, Medium, Slow & Dead Stock</p>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="velocityDonutChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Performance Row -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <h3>Sales Volume by Category</h3>
+            <p>Financial COGS contribution across product categories</p>
+          </div>
+        </div>
+        <div class="chart-body">
+          <canvas id="categoryBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Supplier Analytics -->
+    <div id="tab-suppliers" class="tab-content">
+      <div class="dashboard-grid-2col">
+        <!-- Top Suppliers Leaderboard Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <h3>Suppliers Whose Products Sold Most</h3>
+              <p>Supplier sales contribution in the selected time horizon</p>
+            </div>
+            <div class="toggle-group">
+              <button class="toggle-btn sup-toggle-btn active" data-sort="units">By Volume (Pcs)</button>
+              <button class="toggle-btn sup-toggle-btn" data-sort="cogs">By Value (COGS ৳)</button>
+            </div>
+          </div>
+          <div class="leaderboard-list" id="topSuppliersList">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+
+        <!-- Supplier Performance Chart Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <h3>Supplier COGS Distribution</h3>
+              <p>Sales revenue volume comparison across leading suppliers</p>
+            </div>
+          </div>
+          <div class="chart-body">
+            <canvas id="supplierPerformanceChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Inventory Catalog Explorer -->
+    <div id="tab-inventory" class="tab-content">
+      <div class="card">
+        <!-- Table Filters -->
+        <div class="table-filter-bar">
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="tableSearchInput" class="search-input" placeholder="Search by name, category, or supplier...">
+          </div>
+
+          <div class="filters-group">
+            <select id="categoryFilter" class="select-filter">
+              <option value="All">All Categories</option>
+            </select>
+
+            <select id="supplierFilter" class="select-filter">
+              <option value="All">All Suppliers</option>
+            </select>
+
+            <select id="velocityFilter" class="select-filter">
+              <option value="All">All Velocity Tiers</option>
+              <option value="fast">🚀 Fast (≤45d)</option>
+              <option value="medium">🟢 Medium (46-90d)</option>
+              <option value="slow">🟡 Slow (91-180d)</option>
+              <option value="dead">🔴 Dead Stock (&gt;180d)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Supplier</th>
+                <th style="text-align: right;">Unit Cost</th>
+                <th style="text-align: right;">Stock</th>
+                <th style="text-align: right;">Total Value</th>
+                <th style="text-align: right;">Sold (Qty)</th>
+                <th style="text-align: right;">COGS (৳)</th>
+                <th style="text-align: right;">Turnover</th>
+                <th>Velocity</th>
+              </tr>
+            </thead>
+            <tbody id="productTableBody">
+              <!-- Populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-bar">
+          <div class="pagination-info" id="paginationInfo">Showing 0 of 0 products</div>
+          <div class="pagination-controls">
+            <button id="prevPageBtn" class="page-btn">Previous</button>
+            <button id="nextPageBtn" class="page-btn">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: AI Demand Forecasting & Insights -->
+    <div id="tab-forecasting" class="tab-content">
+      <!-- AI Header Bar -->
+      <div class="card" style="padding: 1.25rem 1.5rem; background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%); color: #ffffff;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h3 style="font-size: 1.3rem; font-weight: 700; color: #ffffff; margin-bottom: 0.25rem;">
+              🤖 AI Demand Forecasting & Executive Reorder Engine
+            </h3>
+            <p style="font-size: 0.82rem; color: #cbd5e1;">
+              Hybrid Forecaster (p10 / p50 / p90 Quantiles) • Syntetos-Babai Pattern Matrix • 1-Day Supplier Lead Time
+            </p>
+          </div>
+          <button id="retrainAiBtn" class="btn" style="background-color: #2563eb; color: #ffffff; border: 1px solid rgba(255,255,255,0.2);">
+            <span>⚡</span> Retrain AI Models
+          </button>
+        </div>
+      </div>
+
+      <!-- 4-Pillar Executive Insight Alert Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card accent-dsi" style="border-left: 4px solid #dc2626;">
+          <div class="kpi-header">
+            <span class="kpi-title">Stockout Alerts (≤7d)</span>
+            <span class="kpi-badge" id="aiStockoutCritical" style="background-color: #fee2e2; color: #dc2626; font-weight: 700;">0 Urgent</span>
+          </div>
+          <div class="kpi-value" id="aiStockoutCount">0</div>
+          <div class="kpi-subtitle">Products depleting within 1-7 days</div>
+        </div>
+
+        <div class="kpi-card accent-turnover" style="border-left: 4px solid #059669;">
+          <div class="kpi-header">
+            <span class="kpi-title">Suggested PO Budget</span>
+            <span class="kpi-badge" id="aiPoSkusBadge">0 SKUs</span>
+          </div>
+          <div class="kpi-value" id="aiPoBudget">৳0</div>
+          <div class="kpi-subtitle">Target 14-day replenishment cover</div>
+        </div>
+
+        <div class="kpi-card accent-cogs" style="border-left: 4px solid #2563eb;">
+          <div class="kpi-header">
+            <span class="kpi-title">Surging Demand SKUs</span>
+            <span class="kpi-badge" style="background-color: #eff6ff; color: #2563eb;">≥ +30% Growth</span>
+          </div>
+          <div class="kpi-value" id="aiSurgingCount">0</div>
+          <div class="kpi-subtitle">Accelerating sales momentum</div>
+        </div>
+
+        <div class="kpi-card accent-stock" style="border-left: 4px solid #ea580c;">
+          <div class="kpi-header">
+            <span class="kpi-title">Trapped Capital</span>
+            <span class="kpi-badge" style="background-color: #ffedd5; color: #ea580c;">Dead Stock</span>
+          </div>
+          <div class="kpi-value" id="aiDeadCapital">৳0</div>
+          <div class="kpi-subtitle">Value locked in 180+ day non-movers</div>
+        </div>
+      </div>
+
+      <!-- Interactive Product Forecast Explorer Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-left">
+            <h3>Interactive Product Forecast Explorer</h3>
+            <p>Historical weekly sales vs 12-week AI prediction with p10–p90 confidence band</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; width: 380px; max-width: 100%;">
+            <select id="forecastProductSelect" class="select-filter" style="width: 100%;">
+              <option value="">Loading products...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Product AI Diagnostic Badges -->
+        <div id="forecastProductSummary" style="padding: 1.25rem 1.5rem; background-color: #f8fafc; border-bottom: 1px solid var(--border-light); display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
+          <div>
+            <div class="summary-stat-label">Demand Pattern</div>
+            <div class="summary-stat-value" id="fcPatternBadge" style="font-size: 0.95rem; color: #1e3a8a;">—</div>
+          </div>
+          <div>
+            <div class="summary-stat-label">Sales Trend</div>
+            <div class="summary-stat-value" id="fcTrendBadge" style="font-size: 0.95rem;">—</div>
+          </div>
+          <div>
+            <div class="summary-stat-label">Days to Stockout</div>
+            <div class="summary-stat-value" id="fcDaysStockout" style="color: #dc2626;">—</div>
+          </div>
+          <div>
+            <div class="summary-stat-label">Suggested Reorder</div>
+            <div class="summary-stat-value" id="fcSuggestedOrder" style="color: #059669;">—</div>
+          </div>
+          <div>
+            <div class="summary-stat-label">Estimated PO Cost</div>
+            <div class="summary-stat-value" id="fcEstimatedCost">—</div>
+          </div>
+        </div>
+
+        <!-- Forecast Trajectory Chart -->
+        <div class="chart-body" style="height: 380px;">
+          <canvas id="forecastTrajectoryChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Two-Column Operational Execution Section -->
+      <div class="dashboard-grid-2col">
+        <!-- Stockout Risk Watchlist -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <h3>Immediate Stockout Risk Watchlist</h3>
+              <p>Top products closest to warehouse depletion</p>
+            </div>
+          </div>
+          <div class="leaderboard-list" id="stockoutRiskList">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+
+        <!-- Supplier Purchase Orders -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <h3>Actionable Purchase Orders by Supplier</h3>
+              <p>Aggregated reorders based on 1-day lead time & 14-day cover</p>
+            </div>
+          </div>
+          <div class="leaderboard-list" id="supplierPoList">
+            <!-- Populated via app.js -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Product Transaction Ledger Modal Drawer -->
+  <div id="ledgerModal" class="modal-backdrop">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="ledgerModalTitle">Product Transaction History</h3>
+        <button class="modal-close-btn" onclick="closeProductLedgerModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="ledgerModalBody">
+        <!-- Populated via app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Supplier Performance & Inventory Breakdown Modal Drawer -->
+  <div id="supplierModal" class="modal-backdrop">
+    <div class="modal-dialog modal-dialog-lg">
+      <div class="modal-header">
+        <div>
+          <h3 id="supplierModalTitle">Supplier Performance & Inventory Breakdown</h3>
+          <p id="supplierModalSubtitle" style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+            Granular product sales, turnover drivers, and active inventory valuation
+          </p>
+        </div>
+        <button class="modal-close-btn" onclick="closeSupplierModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <!-- Supplier KPI Header Cards -->
+        <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+          <div class="kpi-card" style="padding: 0.75rem 1rem;">
+            <div class="kpi-title" style="font-size: 0.72rem;">Catalog SKUs</div>
+            <div class="kpi-value" id="supModalSkus" style="font-size: 1.25rem;">0</div>
+          </div>
+          <div class="kpi-card" style="padding: 0.75rem 1rem;">
+            <div class="kpi-title" style="font-size: 0.72rem;">Total Stock Value</div>
+            <div class="kpi-value" id="supModalTotalVal" style="font-size: 1.25rem; color: var(--navy-primary);">৳0</div>
+          </div>
+          <div class="kpi-card" style="padding: 0.75rem 1rem;">
+            <div class="kpi-title" style="font-size: 0.72rem;">Sold (Units)</div>
+            <div class="kpi-value" id="supModalUnitsSold" style="font-size: 1.25rem; color: #2563eb;">0</div>
+          </div>
+          <div class="kpi-card" style="padding: 0.75rem 1rem;">
+            <div class="kpi-title" style="font-size: 0.72rem;">Supplier COGS</div>
+            <div class="kpi-value" id="supModalCogs" style="font-size: 1.25rem; color: #059669;">৳0</div>
+          </div>
+          <div class="kpi-card" style="padding: 0.75rem 1rem;">
+            <div class="kpi-title" style="font-size: 0.72rem;">Turnover Ratio</div>
+            <div class="kpi-value" id="supModalTurnover" style="font-size: 1.25rem; color: #7c3aed;">0.0x</div>
+          </div>
+          <div class="kpi-card" style="padding: 0.75rem 1rem;">
+            <div class="kpi-title" style="font-size: 0.72rem;">Average DSI</div>
+            <div class="kpi-value" id="supModalDsi" style="font-size: 1.25rem; color: #ea580c;">—</div>
+          </div>
+        </div>
+
+        <!-- Sub-Tab Navigation Toggles -->
+        <div class="toggle-group" style="margin-bottom: 1rem; display: inline-flex;">
+          <button class="toggle-btn sup-subtab-btn active" id="btnSupSoldTab" onclick="switchSupplierSubTab('sold')">
+            🔥 Products Sold & Turnover Drivers (<span id="supSoldBadgeCount">0</span>)
+          </button>
+          <button class="toggle-btn sup-subtab-btn" id="btnSupInvTab" onclick="switchSupplierSubTab('inventory')">
+            📦 Complete Active Inventory & Valuation (<span id="supInvBadgeCount">0</span>)
+          </button>
+        </div>
+
+        <!-- View 1: Sold Products & Turnover Drivers Table -->
+        <div id="supSoldTableView" class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th style="text-align: right;">Unit Cost</th>
+                <th style="text-align: right;">Current Stock</th>
+                <th style="text-align: right;">Sold (Qty)</th>
+                <th style="text-align: right;">COGS (৳)</th>
+                <th style="text-align: right;">Turnover</th>
+                <th style="text-align: right;">Turnover Share</th>
+                <th>Velocity</th>
+              </tr>
+            </thead>
+            <tbody id="supSoldTableBody">
+              <!-- Populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- View 2: Complete Active Inventory & Valuation Table -->
+        <div id="supInvTableView" class="table-responsive" style="max-height: 420px; overflow-y: auto; display: none;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th style="text-align: right;">Unit Cost</th>
+                <th style="text-align: right;">Physical Stock</th>
+                <th style="text-align: right;">Total Valuation (৳)</th>
+                <th style="text-align: right;">Sold in Period</th>
+                <th>Velocity Tier</th>
+              </tr>
+            </thead>
+            <tbody id="supInvTableBody">
+              <!-- Populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="js/charts.js?v=2.2"></script>
+  <script src="js/app.js?v=2.2"></script>
+</body>
+</html>
