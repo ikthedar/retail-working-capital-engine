@@ -1,15 +1,15 @@
-# ⚡ Retail Inventory Turnover Velocity & Supplier Intelligence Engine
+# Retail Inventory Turnover Velocity & Supplier Intelligence Engine
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+
 
 > A high-performance quantitative inventory analytics platform and machine learning forecasting engine. Reconciles transaction-level multi-supplier batch lineage, calculates vectorized Days Sales of Inventory (DSI) and inventory turnover ratios across multi-horizon timeframes, and detects dormant capital tie-up.
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
 In high-volume retail and distribution businesses, inventory is both an asset and a balance-sheet vulnerability:
 1. **Dead Capital Lock-up**: Capital tied up in stagnant SKUs reduces working liquidity, leading to high holding costs and inventory write-offs.
@@ -18,7 +18,7 @@ In high-volume retail and distribution businesses, inventory is both an asset an
 
 ---
 
-## 🚀 Key Architecture & Capabilities
+## Key Architecture & Capabilities
 
 ```
 ┌─────────────────────────┐
@@ -78,7 +78,7 @@ Automatically segments every product in the catalog to pinpoint balance-sheet bo
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * **Backend**: Python 3.10+, FastAPI (Async REST API), SQLAlchemy 2.0 ORM, Pydantic v2
 * **Storage**: SQLite / PostgreSQL (acid-compliant transactional ledger)
@@ -88,7 +88,7 @@ Automatically segments every product in the catalog to pinpoint balance-sheet bo
 
 ---
 
-## ⚡ Quickstart
+## Quickstart
 
 ### 1. Clone & Set Up Environment
 ```bash
@@ -114,7 +114,7 @@ Visit **`http://127.0.0.1:8000`** in your browser to access the dashboard.
 
 ---
 
-## 📡 REST API Reference
+## REST API Reference
 
 | Endpoint | Method | Description |
 | :--- | :--- | :--- |
@@ -127,5 +127,5 @@ Visit **`http://127.0.0.1:8000`** in your browser to access the dashboard.
 
 ---
 
-## 📄 License
+## License
 This project is open-source under the [MIT License](LICENSE).
