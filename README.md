@@ -5,7 +5,7 @@
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
 
 
-> A high-performance quantitative inventory analytics platform and machine learning forecasting engine. Reconciles transaction-level multi-supplier batch lineage, calculates vectorized Days Sales of Inventory (DSI) and inventory turnover ratios across multi-horizon timeframes, and detects dormant capital tie-up.
+> A high-performance quantitative inventory analytics platform and machine learning forecasting engine. Reconciles transaction-level multi-supplier batch lineage, calculates vectorized Days Sales of Inventory (DSI) and inventory turnover ratios across multi-horizon timeframes, and detects dormant capital tie-up. Helps to increase sales, just in time inventory.
 
 ---
 
